@@ -2,6 +2,8 @@
 
 Antigravity is a specialized operational framework designed to transform your IDE into a high-performance workspace for autonomous AI agents. By enforcing a strict "Project-Resource" pattern and providing standardized workflows, Antigravity enables AI to code, research, and validate tasks with minimal human friction.
 
+**Mission**: Instructions for creating a global working directory for autonomous operation for Agents in Antigravity IDE.
+
 ---
 
 ## 🎯 What is Antigravity?
