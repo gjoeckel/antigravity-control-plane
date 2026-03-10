@@ -1,35 +1,15 @@
 model_list:
-  # Antigravity Smart Pool (Gemini 3.1 Flash Lite - 500 RPD / 15 RPM)
   - model_name: antigravity-smart
     litellm_params:
-      model: gemini/gemini-3.1-flash-lite-preview
+      model: gemini/gemini-1.5-pro
       api_key: os.environ/GEMINI_KEY_A
-      rpm: 14
-      tpm: 240000
-  - model_name: antigravity-smart
-    litellm_params:
-      model: gemini/gemini-3.1-flash-lite-preview
-      api_key: os.environ/GEMINI_KEY_B
-      rpm: 14
-      tpm: 240000
-
-  # Antigravity Fast Pool (Gemma 3 - 30 RPM / 14k RPD)
-  # Best for quick, low-context logic tasks
   - model_name: antigravity-fast
     litellm_params:
-      model: gemini/gemma-3-27b-it
-      api_key: os.environ/GEMINI_KEY_A
-      rpm: 28
-  - model_name: antigravity-fast
-    litellm_params:
-      model: gemini/gemma-3-27b-it
+      model: gemini/gemini-1.5-flash
       api_key: os.environ/GEMINI_KEY_B
-      rpm: 28
 
 router_settings:
-  routing_strategy: usage-based-routing
-  num_retries: 3
-  retry_after: 2
+  routing_strategy: simple-shuffle
 
 general_settings:
   master_key: sk-antigravity-admin

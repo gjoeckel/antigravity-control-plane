@@ -6,6 +6,7 @@ from src.core.router.dispatcher import Dispatcher
 from src.memory.context.session_store import SessionStore
 from src.core.agents.research_agent import ResearchAgent
 from src.core.agents.action_agent import ActionAgent
+from src.utils.logger import MissionLogger
 
 class MissionState:
     PENDING = "pending"
@@ -26,6 +27,7 @@ class MissionController:
         self.dispatcher = dispatcher or Dispatcher()
         self.session_store = session_store or SessionStore()
         self.active_missions: Dict[str, Dict[str, Any]] = {}
+        self.logger = MissionLogger()
         
         # Initialize specialized agents
         self.agents = {
@@ -48,6 +50,7 @@ class MissionController:
         }
         self.active_missions[mission_id] = mission
         self.session_store.save_mission(mission)
+        self.logger.log_event("mission_created", {"mission_id": mission_id, "objective": objective})
         return mission_id
 
     def decompose_task(self, mission_id: str) -> List[Dict[str, Any]]:
@@ -110,7 +113,7 @@ class MissionController:
         
         while mission["current_step"] < len(mission["plan"]):
             step = mission["plan"][mission["current_step"]]
-            print(f"🚀 Mission {mission_id[:8]}: Routing to {step['type']} agent...")
+            print(f"🚀 Mission {str(mission_id)[:8]}: Routing to {step['type']} agent...")
             
             # Select specialized agent
             agent = self.agents.get(step['type'], self.agents['research'])
@@ -129,9 +132,11 @@ class MissionController:
             
             mission["current_step"] += 1
             self.session_store.save_mission(mission)
+            self.logger.log_mission_summary(mission_id, mission['objective'], mission['state'], len(mission['history']))
             
         mission["state"] = MissionState.COMPLETED
         self.session_store.save_mission(mission)
+        self.logger.log_mission_summary(mission_id, mission['objective'], mission['state'], len(mission['history']))
         return mission
 
     def get_mission_status(self, mission_id: str) -> Dict[str, Any]:

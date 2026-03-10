@@ -5,6 +5,7 @@ import time
 from typing import Optional, Dict, Any, List
 from src.api.pool.key_vault import KeyVault
 from src.api.pool.rotation_logic import RotationManager
+from src.utils.logger import MissionLogger
 
 class Dispatcher:
     """
@@ -18,6 +19,9 @@ class Dispatcher:
         self.config_path = os.path.join(ops_root, "config/active-provider.json")
         self.proxy_url = "http://localhost:8000"
         self.master_key = "sk-antigravity-admin"
+        
+        # Initialize logging
+        self.logger = MissionLogger()
         
         # Initialize key management
         self.vault = KeyVault()
@@ -55,6 +59,7 @@ class Dispatcher:
         """
         Executes a chat completion via the LiteLLM Proxy Gateway.
         """
+        start_time = time.time()
         model = self.route(complexity)
         
         headers = {
@@ -62,25 +67,40 @@ class Dispatcher:
             "Content-Type": "application/json"
         }
         
+        request_payload = {
+            "model": model,
+            "messages": messages,
+            **kwargs
+        }
+        
         try:
             response = requests.post(
                 f"{self.proxy_url}/chat/completions",
                 headers=headers,
-                json={
-                    "model": model,
-                    "messages": messages,
-                    **kwargs
-                }
+                json=request_payload
             )
+            
+            latency = time.time() - start_time
             
             if response.status_code == 429:
                 print("🚨 429 Detected: LiteLLM Pool is exhausted.")
-                return {"error": "Rate limit exceeded (429)", "status": "failed"}
+                result = {"error": "Rate limit exceeded (429)", "status": "failed"}
+                self.logger.log_api_call("unknown", model, request_payload, result, latency)
+                return result
                 
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            
+            # Extract provider from response headers or body if available
+            provider = result.get("provider", "pooled")
+            self.logger.log_api_call(provider, model, request_payload, result, latency)
+            
+            return result
         except requests.exceptions.RequestException as e:
-            return {"error": str(e), "status": "failed"}
+            latency = time.time() - start_time
+            result = {"error": str(e), "status": "failed"}
+            self.logger.log_api_call("error", model, request_payload, result, latency)
+            return result
 
     def resilient_completion(self, messages: list, complexity: str = "fast", retries: int = 1) -> Dict[str, Any]:
         """

@@ -1,45 +1,37 @@
 #!/bin/bash
+# scripts/acp-start.sh
+# Silently launches LiteLLM proxy and performs health check
 
-# Antigravity Control Plane (ACP) - Silent Startup
-# Responsibility: Launch LiteLLM gateway and verify health.
+set -eo pipefail
 
 OPS_DIR="/Users/a00288946/Agents/antigravity-ops"
-LOG_FILE="$OPS_DIR/litellm/litellm.log"
+LITELLM_DIR="$OPS_DIR/litellm"
+LOG_FILE="$LITELLM_DIR/litellm_silent.log"
 
-echo "🛰️  Starting Antigravity Control Plane..."
-
-# 1. Clear existing port 8000
-lsof -i :8000 -t | xargs kill -9 > /dev/null 2>&1 || true
-
-# 2. Source env keys
-if [ -f "$OPS_DIR/.env" ]; then
-    source "$OPS_DIR/.env"
+# 1. Check if already running
+if curl -s http://localhost:8000/health/readiness > /dev/null; then
+    echo "Antigravity Control Plane running."
+    exit 0
 fi
 
-# 3. Launch LiteLLM in background
-source "$OPS_DIR/litellm/venv/bin/activate"
-nohup litellm --config "$OPS_DIR/litellm/config.yaml" --port 8000 > "$LOG_FILE" 2>&1 &
+# 2. Launch LiteLLM in background
+# We use a subshell to ensure it truly detaches
+(
+    cd "$LITELLM_DIR"
+    nohup bash "start-litellm.sh" > "$LOG_FILE" 2>&1 &
+)
 
-# 4. Perform Health Check with Retry (max 10s)
-echo "⏳ Waiting for Gateway readiness..."
+# 3. Wait for health check
+MAX_RETRIES=30
 COUNT=0
-while [ $COUNT -lt 10 ]; do
-    if curl -s http://localhost:8000/health/readiness | grep -q '"status":"healthy"'; then
-        echo "✅ Gateway is LIVE."
-        echo "------------------------------------------------"
-        echo "🛰️  Antigravity Control Plane running."
-        echo "------------------------------------------------"
-        echo "👉 SETTING REMINDER:"
-        echo "1. API Base: http://localhost:8000"
-        echo "2. API Key: sk-antigravity-admin"
-        echo "3. Model: antigravity-smart"
-        echo "------------------------------------------------"
-        exit 0
-    fi
+while ! curl -s http://localhost:8000/health/readiness > /dev/null; do
     sleep 1
     COUNT=$((COUNT+1))
+    if [ $COUNT -ge $MAX_RETRIES ]; then
+        echo "❌ Error: Antigravity Control Plane failed to start within ${MAX_RETRIES}s."
+        tail -n 20 "$LOG_FILE"
+        exit 1
+    fi
 done
 
-echo "❌ Error: ACP Gateway failed to start within 10 seconds."
-echo "Check logs at: $LOG_FILE"
-exit 1
+echo "Antigravity Control Plane running."

@@ -1,0 +1,20 @@
+{
+  "name": "litellm-provider",
+  "displayName": "LiteLLM Provider",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ask.antigravity",
+        "title": "Ask Antigravity (ACP)"
+      }
+    ]
+  }
+}
