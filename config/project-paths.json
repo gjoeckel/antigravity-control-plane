@@ -1,0 +1,22 @@
+{
+  "canvas_reports": {
+    "development": {
+      "folder": "$HOME/Projects/canvas_reports",
+      "description": ""
+    },
+    "resources": {
+      "folder": "$HOME/Agents/resources/canvas_reports",
+      "description": ""
+    }
+  },
+  "antigravity": {
+    "development": {
+      "folder": "/Users/a00288946/Projects/github-globals/antigravity",
+      "description": ""
+    },
+    "resources": {
+      "folder": "/Users/a00288946/Agents/Resources/github-globals/antigravity",
+      "description": ""
+    }
+  }
+}

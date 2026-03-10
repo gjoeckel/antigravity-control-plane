@@ -23,13 +23,8 @@ Antigravity is platform-agnostic but requires specific bootstrapping depending o
 
 ### 🍏 For macOS Users
 If you are on a Mac, navigate to the macOS deployment guide to begin your "Absolute Zero" setup.
-👉 **[macOS Deployment Guide](./macOS/AGENT-README.md)**
+👉 **[macOS Deployment Guide](./AGENT-README.md)**
 
-### 🪟 For Windows Users
-If you are on Windows (Native), navigate to the Windows deployment guide for PowerShell-based bootstrapping.
-👉 **[Windows Deployment Guide](./winOS/AGENT-README.md)**
-
----
 
 ## 📁 The Antigravity Hierarchy
 
@@ -44,4 +39,4 @@ When setup is complete, your machine will follow this premium organizational pat
 Antigravity is built for the community of autonomous builders. Pull requests for new workflows or MCP server configurations are welcome.
 
 **Last Updated**: March 9, 2026
-**Version**: 1.1.0 (Dual-OS Support)
+**Version**: 1.1.0 (macOS Tracking)

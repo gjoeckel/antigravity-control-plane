@@ -1,0 +1,22 @@
+# Secrets and Environment
+.env
+
+# Memory and Persistence
+memory/*.db
+memory/test_antigravity.db
+
+# Virtual Environments
+litellm/venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+.agent/
+.gemini/
