@@ -6,7 +6,8 @@
     "vscode": "^1.80.0"
   },
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onView:acpSidebar"
   ],
   "main": "./extension.js",
   "contributes": {
