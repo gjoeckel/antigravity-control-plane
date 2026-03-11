@@ -1,0 +1,1 @@
+{"timestamp": "2026-03-10T17:55:34.060542", "event_type": "api_call", "provider": "error", "model": "antigravity-fast", "request_summary": {"messages_count": 1, "last_message": "Say 'Dispatcher is Online' if you can read this."}, "response_status": "failed", "latency_sec": 0.203}

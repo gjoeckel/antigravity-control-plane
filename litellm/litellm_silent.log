@@ -1,0 +1,74 @@
+✅ Environment variables loaded.
+🚀 Starting LiteLLM Proxy on port 8000...
+📍 Config: /Users/a00288946/Agents/antigravity-ops/litellm/config.yaml
+2026-03-10 16:55:39,648 - litellm_proxy_extras - INFO - Running prisma migrate deploy
+2026-03-10 16:55:41,793 - litellm_proxy_extras - INFO - prisma migrate deploy stdout: Prisma schema loaded from schema.prisma
+Datasource "client": PostgreSQL database "litellm_db", schema "public" at "localhost:5432"
+
+105 migrations found in prisma/migrations
+
+Applying migration `20260310165439_baseline_diff`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260310165439_baseline_diff/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+
+2026-03-10 16:55:41,793 - litellm_proxy_extras - INFO - prisma migrate deploy completed
+2026-03-10 16:55:41,793 - litellm_proxy_extras - INFO - Running post-migration sanity check...
+2026-03-10 16:55:41,793 - litellm_proxy_extras - INFO - Generating migration diff between DB and schema.prisma...
+2026-03-10 16:55:43,759 - litellm_proxy_extras - INFO - Migration diff created at /Users/a00288946/Agents/antigravity-ops/litellm/venv/lib/python3.12/site-packages/litellm_proxy_extras/migrations/20260310165541_baseline_diff/migration.sql
+2026-03-10 16:55:43,759 - litellm_proxy_extras - INFO - Running prisma db execute to apply the migration diff...
+2026-03-10 16:55:45,702 - litellm_proxy_extras - INFO - prisma db execute stdout: Script executed successfully.
+
+2026-03-10 16:55:45,702 - litellm_proxy_extras - INFO - ✅ Migration diff applied successfully
+2026-03-10 16:55:45,702 - litellm_proxy_extras - INFO - ✅ Post-migration sanity check completed
+INFO:     Started server process [9568]
+INFO:     Waiting for application startup.
+
+   ██╗     ██╗████████╗███████╗██╗     ██╗     ███╗   ███╗
+   ██║     ██║╚══██╔══╝██╔════╝██║     ██║     ████╗ ████║
+   ██║     ██║   ██║   █████╗  ██║     ██║     ██╔████╔██║
+   ██║     ██║   ██║   ██╔══╝  ██║     ██║     ██║╚██╔╝██║
+   ███████╗██║   ██║   ███████╗███████╗███████╗██║ ╚═╝ ██║
+   ╚══════╝╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝     ╚═╝
+
+query-engine 393aa359c9ad4a4bb28630fb5613f9c281cde053
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+
+[1;37m#------------------------------------------------------------#[0m
+[1;37m#                                                            #[0m
+[1;37m#       'This feature doesn't meet my needs because...'       #[0m
+[1;37m#        https://github.com/BerriAI/litellm/issues/new        #[0m
+[1;37m#                                                            #[0m
+[1;37m#------------------------------------------------------------#[0m
+
+ Thank you for using LiteLLM! - Krrish & Ishaan
+
+
+
+[1;31mGive Feedback / Get Help: https://github.com/BerriAI/litellm/issues/new[0m
+
+
+[32mLiteLLM: Proxy initialized with Config, Set models:[0m
+[32m    antigravity-smart[0m
+[32m    antigravity-fast[0m
+[32m    antigravity-mock[0m
+LiteLLM_VerificationTokenView Created!
+MonthlyGlobalSpend Created!
+Last30dKeysBySpend Created!
+Last30dModelsBySpend Created!
+MonthlyGlobalSpendPerKey Created!
+MonthlyGlobalSpendPerUserPerKey Created!
+DailyTagSpend Created!
+Last30dTopEndUsersSpend Created!
+INFO:     127.0.0.1:63009 - "POST /key/generate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63035 - "POST /key/update HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9568]

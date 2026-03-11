@@ -1,5 +1,7 @@
 const vscode = require('vscode');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * ACP Phase 3: Enhanced UX & Observability
@@ -7,9 +9,86 @@ const http = require('http');
  */
 
 let modelCache = [];
+let sidebarProvider;
+
+class SovereignSidebarProvider {
+    constructor(extensionUri) {
+        this._extensionUri = extensionUri;
+    }
+
+    resolveWebviewView(webviewView) {
+        this._view = webviewView;
+        webviewView.webview.options = { enableScripts: true };
+        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    }
+
+    updateStatus(agent, status, log = null) {
+        console.log(`[ACP-SIDEBAR] Update: ${agent} | ${status} | ${log}`);
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'update', agent, status, log });
+        }
+    }
+
+    _getHtmlForWebview(webview) {
+        return `<!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #e1e4e8; padding: 15px; }
+                .status-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+                .agent-name { font-size: 1.2em; font-weight: bold; color: #58a6ff; margin-bottom: 5px; }
+                .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; background: #238636; color: white; }
+                .status-badge.thinking { background: #9e6a03; }
+                .status-badge.idle { background: #484f58; }
+                .log-section { font-family: 'Consolas', monospace; font-size: 0.9em; color: #8b949e; border-top: 1px solid #30363d; padding-top: 10px; margin-top: 10px; }
+                .log-entry { margin-bottom: 4px; border-left: 2px solid #58a6ff; padding-left: 8px; }
+                .pulse { animation: pulse-animation 2s infinite; }
+                @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+            </style>
+        </head>
+        <body>
+            <h3>Sovereign Control</h3>
+            <div class="status-card">
+                <div id="agent" class="agent-name">SYNAPSE</div>
+                <div id="status" class="status-badge idle">IDLE</div>
+                <div id="logs" class="log-section">
+                    <div class="log-entry">Control Plane Online</div>
+                </div>
+            </div>
+            
+            <script>
+                const vscode = acquireVsCodeApi();
+                const agentEl = document.getElementById('agent');
+                const statusEl = document.getElementById('status');
+                const logsEl = document.getElementById('logs');
+
+                window.addEventListener('message', event => {
+                    const { command, agent, status, log } = event.data;
+                    if (command === 'update') {
+                        agentEl.innerText = agent;
+                        statusEl.innerText = status;
+                        statusEl.className = 'status-badge ' + status.toLowerCase();
+                        if (status === 'THINKING' || status === 'EXECUTING') statusEl.classList.add('pulse');
+                        
+                        if (log) {
+                            const entry = document.createElement('div');
+                            entry.className = 'log-entry';
+                            entry.innerText = '[' + new Date().toLocaleTimeString() + '] ' + log;
+                            logsEl.prepend(entry);
+                        }
+                    }
+                });
+            </script>
+        </body>
+        </html>`;
+    }
+}
 
 function activate(context) {
     console.log('Antigravity Control Plane (ACP) Extension Active');
+
+    sidebarProvider = new SovereignSidebarProvider(context.extensionUri);
+    const sidebarReg = vscode.window.registerWebviewViewProvider('acpSidebar', sidebarProvider);
 
     // 1. Dynamic Model Discovery
     fetchModels();
@@ -56,7 +135,7 @@ function activate(context) {
         });
     });
 
-    context.subscriptions.push(completionProvider, chatCommand);
+    context.subscriptions.push(completionProvider, chatCommand, sidebarReg);
 }
 
 /**
@@ -108,6 +187,10 @@ async function callACPProxy(modelAlias, prompt, stream = false) {
  * Implements Streaming UI updates for the Webview
  */
 async function handleStreamingChat(prompt, panel) {
+    // Identify Agent based on content or role (Simple heuristic for now)
+    const activeAgent = prompt.toLowerCase().includes('plan') ? 'LEXICONNA' : 'SYNAPSE';
+    sidebarProvider.updateStatus(activeAgent, 'THINKING', `User: ${prompt.substring(0, 20)}...`);
+
     const traceId = `trace-chat-${Date.now()}`;
     const options = {
         hostname: 'localhost',
@@ -122,16 +205,61 @@ async function handleStreamingChat(prompt, panel) {
         }
     };
 
+    const tools = [
+        {
+            type: "function",
+            function: {
+                name: "write_file",
+                description: "Writes content to a specific file path in the workspace.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        path: { type: "string", description: "Relative path to file" },
+                        content: { type: "string", description: "The content to write" }
+                    },
+                    required: ["path", "content"]
+                }
+            }
+        },
+        {
+            type: "function",
+            function: {
+                name: "read_file",
+                description: "Reads the content of a file from the workspace.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        path: { type: "string", description: "Relative path to the file to read" }
+                    },
+                    required: ["path"]
+                }
+            }
+        }
+    ];
+
     const req = http.request(options, (res) => {
-        res.on('data', (chunk) => {
-            // Process SSE (Server-Sent Events) chunks
+        res.on('data', async (chunk) => {
             const lines = chunk.toString().split('\n');
             for (const line of lines) {
                 if (line.startsWith('data: ')) {
                     try {
                         const data = JSON.parse(line.slice(6));
-                        const content = data.choices[0]?.delta?.content || '';
-                        panel.webview.postMessage({ command: 'contentChunk', text: content });
+                        const message = data.choices[0];
+                        
+                        // Handle standard content streaming
+                        if (message.delta && message.delta.content) {
+                            panel.webview.postMessage({ command: 'contentChunk', text: message.delta.content });
+                        }
+
+                        // Handle Tool Calls (Dynamic Injection Success Path)
+                        if (message.delta && message.delta.tool_calls) {
+                            const toolCall = message.delta.tool_calls[0];
+                            if (toolCall.function) {
+                                panel.webview.postMessage({ command: 'contentChunk', text: `\n[ACP-ACTION]: Triggering ${toolCall.function.name}...\n` });
+                                const result = await executeTool(toolCall);
+                                panel.webview.postMessage({ command: 'contentChunk', text: `\n[ACP-RESULT]: ${result}\n` });
+                            }
+                        }
                     } catch (e) { /* End of stream */ }
                 }
             }
@@ -141,9 +269,55 @@ async function handleStreamingChat(prompt, panel) {
     req.write(JSON.stringify({
         model: 'antigravity-smart',
         messages: [{ role: 'user', content: prompt }],
+        tools: tools,
         stream: true
     }));
     req.end();
+
+    req.on('close', () => {
+        sidebarProvider.updateStatus('SYNAPSE', 'IDLE');
+    });
+}
+
+/**
+ * Execution Core for Phase 4: Autonomous Workspace Management
+ */
+async function executeTool(toolCall) {
+    const { name, arguments: argsString } = toolCall.function;
+    const args = JSON.parse(argsString);
+    
+    // Safety check: only allow operations within the workspace
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+        return "Error: No workspace folder open.";
+    }
+    
+    const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const targetPath = path.join(workspacePath, args.path);
+
+    // Basic security: prevent path traversal
+    if (!targetPath.startsWith(workspacePath)) {
+        return `Error: Security Violation. Execution blocked for path: ${args.path}`;
+    }
+
+    try {
+        sidebarProvider.updateStatus('SYNAPSE', 'EXECUTING', `Tool: ${name}`);
+        if (name === 'write_file') {
+            fs.writeFileSync(targetPath, args.content, 'utf8');
+            sidebarProvider.updateStatus('SYNAPSE', 'EXECUTING', `Success: Wrote ${args.path}`);
+            return `Successfully wrote to ${args.path}`;
+        } else if (name === 'read_file') {
+            if (!fs.existsSync(targetPath)) {
+                sidebarProvider.updateStatus('SYNAPSE', 'EXECUTING', `Error: ${args.path} not found`);
+                return `Error: File not found at ${args.path}`;
+            }
+            const content = fs.readFileSync(targetPath, 'utf8');
+            sidebarProvider.updateStatus('SYNAPSE', 'EXECUTING', `Success: Read ${args.path}`);
+            return content;
+        }
+    } catch (err) {
+        sidebarProvider.updateStatus('SYNAPSE', 'EXECUTING', `Error: ${err.message}`);
+        return `Error executing ${name}: ${err.message}`;
+    }
 }
 
 async function fetchModels() {

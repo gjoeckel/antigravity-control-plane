@@ -1,34 +1,19 @@
 model_list:
-  # --- Smart Group (Primary: Gemini Pro) ---
   - model_name: antigravity-smart
     litellm_params:
-      model: gemini/gemini-1.5-pro
-      api_key: os.environ/GEMINI_KEY_A
-      rpm: 14
-      tpm: 1000000
-    
-  # --- Fast Group (Failover & Basic Tasks) ---
+      model: gemini/gemini-pro-latest
+      api_key: AIzaSyA8QiDW3Hy5Lew7JTd75X3iYk-W2OGw33w
   - model_name: antigravity-fast
     litellm_params:
-      model: gemini/gemini-1.5-flash
-      api_key: os.environ/GEMINI_KEY_B
-      rpm: 14
-      tpm: 1000000
-
-  # --- Mock Group (Offline/Testing) ---
-  - model_name: antigravity-mock
-    litellm_params:
-      model: openai/mock-model
-      mock_response: "ACP Mock Response: Connection Successful. No tokens consumed."
-
-router_settings:
-  routing_strategy: simple-shuffle
-  model_group_alias:
-    "antigravity-smart": ["antigravity-fast"]
+      model: gemini/gemini-flash-latest
+      api_key: AIzaSyA8QiDW3Hy5Lew7JTd75X3iYk-W2OGw33w
 
 general_settings:
   master_key: sk-antigravity-admin
-  database_url: "postgresql://litellm_admin:sk-antigravity-db-pass@localhost:5432/litellm_db"
+  database_url: "postgresql://litellm_admin:sk-antigravity-db-pass@db:5432/litellm_db"
+
+callbacks:
+  - acp_logging_handler.proxy_custom_logger
 
 litellm_settings:
   drop_params: true
