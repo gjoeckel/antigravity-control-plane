@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Control Plane</title>
+    
+    <!-- Favicon: Simple Data URI -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌩️</text></svg>">
+
+    <!-- Google Fonts: Google Sans & Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&family=Roboto+Mono&display=swap" rel="stylesheet">
+    
+    <!-- React (Production Build) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" crossorigin></script>
+    
+    <!-- Firebase SDKs: Using CDN (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --g-blue: #1a73e8;
+            --g-blue-hover: #1765cc;
+            --g-gray-bg: #f8f9fa;
+            --g-border: #dadce0;
+            --g-text: #3c4043;
+            --g-text-light: #70757a;
+            --g-success: #1e8e3e;
+            --g-warning: #f9ab00;
+            --g-error: #d93025;
+        }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--g-gray-bg);
+            color: var(--g-text);
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2, h3, .google-sans { font-family: 'Google Sans', sans-serif; }
+        .mono { font-family: 'Roboto Mono', monospace; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Layout */
+        .min-h-screen { min-height: 100vh; display: flex; flex-direction: column; }
+        .flex-1 { flex: 1; }
+        .header { background: white; border-bottom: 1px solid var(--g-border); padding: 12px 0; position: sticky; top: 0; z-index: 100; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo-group { display: flex; align-items: center; gap: 12px; }
+        .logo-text h1 { font-size: 20px; font-weight: 500; margin: 0; color: #1f1f1f; }
+        .logo-text p { font-size: 10px; color: var(--g-text-light); text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+
+        .main { padding: 32px 0; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
+        .grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+
+        @media (max-width: 768px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .grid-main { grid-template-columns: 1fr; }
+        }
+
+        /* Components */
+        .g-card {
+            background: white;
+            border: 1px solid var(--g-border);
+            border-radius: 8px;
+            padding: 24px;
+            transition: box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .g-card:hover {
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+        .g-card-header { font-size: 11px; font-weight: 700; color: var(--g-text-light); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+        .g-card-value { font-size: 36px; font-weight: 300; color: #202124; }
+        
+        .registry-table { width: 100%; border-collapse: collapse; }
+        .registry-row { border-bottom: 1px solid var(--g-border); display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; transition: background 0.2s; }
+        .registry-row:hover { background-color: rgba(26, 115, 232, 0.04); }
+        .registry-row:last-child { border-bottom: none; }
+        .registry-info .name { font-size: 14px; font-weight: 500; color: #202124; }
+        .registry-info .role { font-size: 12px; color: var(--g-text-light); }
+
+        .consent-section { margin-top: 24px; }
+        .form-group { display: flex; gap: 12px; margin-top: 16px; }
+        .g-input { flex: 1; border: 1px solid var(--g-border); border-radius: 8px; padding: 10px 16px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .g-input:focus { border: 2px solid var(--g-blue); padding: 9px 15px; }
+
+        .g-btn-primary { background: var(--g-blue); color: white; border: none; font-size: 14px; font-weight: 500; border-radius: 4px; padding: 8px 24px; cursor: pointer; transition: background 0.2s; }
+        .g-btn-primary:hover { background: var(--g-blue-hover); }
+        .g-btn-outline { background: transparent; border: 1px solid var(--g-border); color: var(--g-blue); font-size: 12px; font-weight: 500; border-radius: 4px; padding: 4px 16px; cursor: pointer; margin-top: 12px; }
+        .g-btn-outline:hover { background: rgba(26, 115, 232, 0.04); }
+
+        /* Console */
+        .console { background: #1a1b1c; border-radius: 8px; display: flex; flex-direction: column; min-height: 320px; }
+        .console-header { background: #2f3133; padding: 8px 16px; border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+        .console-label { color: #8a8d91; font-size: 10px; font-weight: 700; font-family: 'Roboto Mono', monospace; margin-left: 8px; }
+        .console-body { padding: 16px; font-family: 'Roboto Mono', monospace; font-size: 11px; color: #e8eaed; overflow-y: auto; flex: 1; }
+        .log-entry { margin-bottom: 6px; display: flex; gap: 12px; animation: fadeIn 0.3s; }
+        .log-time { color: #5f6368; flex-shrink: 0; }
+        .log-msg.success { color: #81c995; }
+        .log-msg.error { color: #f28b82; }
+        .log-msg.info { color: #8ab4f8; }
+        .log-msg.warning { color: #fde293; }
+
+        .status-pill { display: flex; align-items: center; gap: 8px; background: #e6f4ea; color: #137333; border: 1px solid #ceead6; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 500; text-transform: uppercase; }
+        .pulse { width: 6px; height: 6px; background: #34a853; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        /* Helpers */
+        .progress-bar { width: 100%; height: 4px; background: #e8eaed; border-radius: 2px; margin-top: 16px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--g-blue); transition: width 1s; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .loading-screen { position: fixed; inset: 0; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f1f3f4; border-top: 4px solid var(--g-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .footer { border-top: 1px solid var(--g-border); padding: 24px 0; margin-top: 48px; color: var(--g-text-light); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; }
+        .footer-content { display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect, useCallback, useMemo } = React;
+        const e = React.createElement;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAT8EPFQffS3Ox7S79NatHGS4Q2ZhagCc0",
+            authDomain: "hazel-service-489900-f3.firebaseapp.com",
+            projectId: "hazel-service-489900-f3",
+            storageBucket: "hazel-service-489900-f3.firebasestorage.app",
+            messagingSenderId: "319843614554",
+            appId: "1:319843614554:web:39ed7612a8bdd76fc3bd63"
+        };
+
+        const currentAppId = "antigravity-ops";
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [agents, setAgents] = useState([]);
+            const [logs, setLogs] = useState([]);
+            const [domainStatus, setDomainStatus] = useState({ stability: 100, purged: 0 });
+            const [consentMsg, setConsentMsg] = useState("");
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            const addLog = useCallback((msg, type = 'info') => {
+                setLogs(prev => [{ id: Date.now() + Math.random(), msg, type, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 15));
+            }, []);
+
+            useEffect(() => {
+                try {
+                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                    const auth = firebase.auth();
+                    const unsub = auth.onAuthStateChanged(async (u) => {
+                        if (!u) {
+                            try {
+                                addLog("Authenticating node...", "info");
+                                await auth.signInAnonymously();
+                            } catch (err) {
+                                addLog("Auth failed: " + err.message, "error");
+                            }
+                        } else {
+                            addLog(`Node online: ${u.uid.slice(0,8)}`, "success");
+                        }
+                        setUser(u);
+                        setLoading(false);
+                    });
+                    return unsub;
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            }, [addLog]);
+
+            useEffect(() => {
+                if (!user) return;
+                const db = firebase.firestore();
+                const baseRef = db.collection('artifacts').doc(currentAppId).collection('public').doc('data');
+                
+                const unsubAgents = baseRef.collection('agents').onSnapshot(snap => {
+                    setAgents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                }, err => addLog("Registry sync error", "error"));
+
+                const unsubStatus = baseRef.collection('domain_config').doc('status').onSnapshot(doc => {
+                    if (doc.exists) setDomainStatus(doc.data());
+                }, err => addLog("Integrity sync error", "error"));
+
+                return () => { unsubAgents(); unsubStatus(); };
+            }, [user, addLog]);
+
+            useEffect(() => { lucide.createIcons(); }, [loading, agents, logs]);
+
+            const handlePurge = async () => {
+                if (!user) return;
+                addLog("Executing artifact purge...", "warning");
+                const db = firebase.firestore();
+                const ref = db.collection('artifacts').doc(currentAppId).collection('public').doc('data').collection('domain_config').doc('status');
+                try {
+                    await ref.set({
+                        purged: (domainStatus.purged || 0) + 1,
+                        stability: Math.min(100, (domainStatus.stability || 0) + 2),
+                        lastPurge: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    addLog("Bridge reinforced.", "success");
+                } catch (err) { addLog("Purge failed.", "error"); }
+            };
+
+            if (error) return e('div', { className: 'loading-screen' }, 
+                e('i', { 'data-lucide': 'alert-circle', style: { color: 'var(--g-error)', width: 48, height: 48 } }),
+                e('h1', { style: { marginTop: 16 } }, 'Bridge Offline'),
+                e('p', { style: { color: 'var(--g-text-light)' } }, error)
+            );
+
+            if (loading) return e('div', { className: 'loading-screen' }, 
+                e('div', { className: 'spinner' }),
+                e('p', { className: 'google-sans', style: { marginTop: 16, color: 'var(--g-text-light)' } }, 'Synchronizing Bridge...')
+            );
+
+            return e('div', { className: 'min-h-screen' },
+                // Header
+                e('header', { className: 'header' },
+                    e('div', { className: 'container header-content' },
+                        e('div', { className: 'logo-group' },
+                            e('div', { style: { color: 'var(--g-blue)' } }, e('i', { 'data-lucide': 'layers', style: { width: 32, height: 32 } })),
+                            e('div', { className: 'logo-text' },
+                                e('h1', null, 'Antigravity Control'),
+                                e('p', null, firebaseConfig.projectId)
+                            )
+                        ),
+                        e('div', { style: { display: 'flex', alignItems: 'center', gap: 16 } },
+                            e('div', { className: 'status-pill' }, e('div', { className: 'pulse' }), 'Bridge Stable'),
+                            e('div', { style: { width: 32, height: 32, borderRadius: '50%', background: '#e8f0fe', color: '#1967d2', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: 12, fontWeight: 700 } }, 'A')
+                        )
+                    )
+                ),
+
+                // Main Content
+                e('main', { className: 'main container' },
+                    // Summary Grid
+                    e('div', { className: 'grid-3' },
+                        e('div', { className: 'g-card' },
+                            e('div', { className: 'g-card-header' }, 'Bridge Integrity'),
+                            e('div', { className: 'g-card-value' }, domainStatus.stability + '%'),
+                            e('div', { className: 'progress-bar' }, e('div', { className: 'progress-fill', style: { width: domainStatus.stability + '%' } }))
+                        ),
+                        e('div', { className: 'g-card' },
+                            e('div', { className: 'g-card-header' }, 'Purged Artifacts'),
+                            e('div', { className: 'g-card-value' }, domainStatus.purged),
+                            e('button', { className: 'g-btn-outline', onClick: handlePurge }, 'Execute Purge')
+                        ),
+                        e('div', { className: 'g-card' },
+                            e('div', { className: 'g-card-header' }, 'Active Agents'),
+                            e('div', { className: 'g-card-value' }, agents.length),
+                            e('div', { style: { display: 'flex', gap: 4, marginTop: 16 } }, 
+                                agents.map(a => e('div', { key: a.id, title: a.name, style: { width: 8, height: 8, borderRadius: '50%', background: 'var(--g-blue)' } }))
+                            )
+                        )
+                    ),
+
+                    // Main Layout
+                    e('div', { className: 'grid-main' },
+                        // Column 1
+                        e('div', null,
+                            e('div', { className: 'g-card', style: { padding: 0 } },
+                                e('div', { style: { padding: '16px 24px', borderBottom: '1px solid var(--g-border)', background: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                                    e('h2', { className: 'google-sans', style: { fontSize: 16, margin: 0 } }, 'Agent Registry'),
+                                    e('i', { 'data-lucide': 'shield-check', style: { width: 16, height: 16, color: 'var(--g-text-light)' } })
+                                ),
+                                e('div', null, 
+                                    agents.length > 0 ? agents.map(a => 
+                                        e('div', { key: a.id, className: 'registry-row' },
+                                            e('div', { className: 'registry-info' },
+                                                e('div', { className: 'name' }, a.name),
+                                                e('div', { className: 'role' }, a.role)
+                                            ),
+                                            e('div', { className: 'mono', style: { fontSize: 10, background: '#f1f3f4', padding: '4px 8px', borderRadius: 4 } }, a.idCode)
+                                        )
+                                    ) : e('div', { style: { padding: 48, textAlign: 'center', color: 'var(--g-text-light)', fontStyle: 'italic', fontSize: 14 } }, 'Awaiting agent deployment...')
+                                )
+                            ),
+
+                            e('div', { className: 'g-card', style: { marginTop: 24 } },
+                                e('h2', { className: 'google-sans', style: { fontSize: 16, margin: '0 0 16px 0' } }, 'Consent Mandate'),
+                                e('div', { className: 'form-group' },
+                                    e('input', { 
+                                        className: 'g-input', 
+                                        placeholder: 'Formal authorization message...',
+                                        value: consentMsg,
+                                        onChange: ev => setConsentMsg(ev.target.value)
+                                    }),
+                                    e('button', { className: 'g-btn-primary' }, 'Authorize')
+                                ),
+                                e('p', { style: { fontSize: 10, color: 'var(--g-text-light)', letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 12 } }, 'Consent Mandate Active: Formal recognition required.')
+                            )
+                        ),
+
+                        // Column 2
+                        e('div', null,
+                            e('div', { className: 'console' },
+                                e('div', { className: 'console-header' },
+                                    e('div', { className: 'dot red' }),
+                                    e('div', { className: 'dot yellow' }),
+                                    e('div', { className: 'dot green' }),
+                                    e('span', { className: 'console-label' }, 'BRIDGE_OS.CONSOLE')
+                                ),
+                                e('div', { className: 'console-body' },
+                                    e('div', { style: { color: '#5f6368', fontStyle: 'italic', marginBottom: 12 } }, '-- BRIDGE SESSION INITIALIZED --'),
+                                    logs.map(log => 
+                                        e('div', { key: log.id, className: 'log-entry' },
+                                            e('span', { className: 'log-time' }, log.time),
+                                            e('span', { className: 'log-msg ' + log.type }, log.msg)
+                                        )
+                                    ),
+                                    e('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                                        e('span', { style: { color: '#34a853' } }, 'root@antigravity:~$'),
+                                        e('span', { style: { width: 8, height: 16, background: '#5f6368', animation: 'pulse 1s infinite' } })
+                                    )
+                                )
+                            ),
+
+                            e('div', { className: 'g-card', style: { marginTop: 24, padding: 16 } },
+                                e('div', { className: 'g-card-header' }, 'System Identity'),
+                                e('div', { style: { display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 } },
+                                    e('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: 12 } }, 
+                                        e('span', { style: { color: 'var(--g-text-light)', fontStyle: 'italic' } }, 'Architect'),
+                                        e('span', { style: { color: 'var(--g-blue)', fontWeight: 500 } }, 'LEXICONA')
+                                    ),
+                                    e('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: 12 } }, 
+                                        e('span', { style: { color: 'var(--g-text-light)', fontStyle: 'italic' } }, 'Infra'),
+                                        e('span', { style: { color: 'var(--g-blue)', fontWeight: 500 } }, 'SYNAPSE')
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+
+                // Footer
+                e('footer', { className: 'footer container' },
+                    e('div', { className: 'footer-content' },
+                        e('div', null, 'Control Plane v1.2.2-Google-Stable'),
+                        e('div', null, '© 2026 Antigravity Operations')
+                    )
+                )
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(e(App));
+    </script>
+</body>
+</html>
