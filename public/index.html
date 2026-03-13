@@ -3,22 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sovereign Control | v11.2</title>
+    <title>Primary Control | v11.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&family=Roboto+Mono&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg: #030303; --accent: #3b82f6; --gold: #fbbf24; }
-        body { 
-            font-family: 'Inter', sans-serif; background-color: var(--bg); color: #f4f4f5;
-            -webkit-font-smoothing: antialiased; overscroll-behavior: none; height: 100vh;
+        :root { 
+            --google-blue: #1a73e8; 
+            --google-red: #d93025; 
+            --google-green: #188038; 
+            --google-yellow: #f9ab00;
+            --bg-gray: #f8f9fa;
         }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass { background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(24px); }
-        main { height: calc(100% - 150px); overflow-y: auto; padding-bottom: 40px; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--bg-gray); 
+            color: #3c4043;
+            -webkit-font-smoothing: antialiased;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1, h2, h3, .google-sans { font-family: 'Google Sans', sans-serif; }
+        .mono { font-family: 'Roboto Mono', monospace; }
         
-        .pulse-indicator { 
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+        .google-card {
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            box-shadow: none;
+            transition: box-shadow 0.2s;
+        }
+        .google-card:hover {
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
+        }
+
+        .pulse-emerald { 
+            box-shadow: 0 0 8px rgba(24, 128, 56, 0.6);
             animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         @keyframes pulse-ring {
@@ -26,90 +47,85 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
-        .forge-pulse { border: 1px solid rgba(251, 191, 36, 0.2); animation: forge-glow 3s infinite; }
-        @keyframes forge-glow { 0% { border-color: rgba(251, 191, 36, 0.1); } 50% { border-color: rgba(251, 191, 36, 0.4); } 100% { border-color: rgba(251, 191, 36, 0.1); } }
+        #chat-container {
+            height: calc(100vh - 180px);
+        }
+        .message-bubble {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .message-user {
+            background-color: var(--google-blue);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message-agent {
+            background-color: white;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
     </style>
 </head>
 <body class="flex flex-col overflow-hidden">
 
-    <!-- SOVEREIGN STATUS BAR -->
-    <div class="bg-amber-500/10 border-b border-amber-500/20 px-3 py-1.5 flex justify-between items-center shrink-0">
-        <div class="flex items-center gap-2">
-            <div id="status-dot" class="w-2 h-2 rounded-full bg-emerald-500 pulse-indicator"></div>
-            <span id="status-text" class="text-[8px] font-black text-emerald-500 uppercase tracking-[0.2em]">Sovereign Online</span>
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-3">
+            <div id="status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-600 pulse-emerald"></div>
+            <h1 class="text-lg font-medium text-gray-800 tracking-tight">Primary <span class="text-blue-600">Control</span></h1>
         </div>
-        <span id="header-clock" class="text-[8px] mono text-zinc-600">--:--:-- UTC</span>
+        <div class="flex items-center gap-3">
+            <span id="header-clock" class="text-[10px] mono text-gray-500 font-medium">--:--:-- UTC</span>
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xs">G</div>
+        </div>
+    </nav>
+
+    <div class="bg-white border-b border-gray-100 px-4 py-1.5 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-2">
+            <span id="status-label" class="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Online</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1">
+                <i data-lucide="cpu" class="w-3 h-3 text-gray-400"></i>
+                <span class="text-[9px] font-medium text-gray-500">M4 Ghost</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <i data-lucide="cloud" class="w-3 h-3 text-blue-500"></i>
+                <span class="text-[9px] font-medium text-gray-500">Sentinel v1</span>
+            </div>
+        </div>
     </div>
 
-    <header class="p-4 flex justify-between items-center shrink-0">
-        <div>
-            <h1 class="text-xs font-black tracking-[0.4em] text-white uppercase italic">Sovereign</h1>
-            <p class="text-[8px] text-zinc-600 font-bold uppercase mt-1 tracking-widest">Mobile Bridge v11.2</p>
-        </div>
-        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
-    </header>
-
-    <main class="flex-1 p-4 space-y-5">
-        
-        <!-- CLOUD SENTINEL CARD -->
-        <div class="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-2xl forge-pulse">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-[8px] text-amber-500 font-bold uppercase tracking-widest mb-1">Intelligence Gateway</p>
-                    <h2 class="text-sm font-medium text-white italic">"Cloud Sentinel Online"</h2>
-                </div>
-                <i data-lucide="cloud-lightning" class="w-4 h-4 text-amber-500"></i>
-            </div>
-
-            <div class="space-y-3">
-                <button id="brain-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4"></i>
-                    Ping Cloud Brain
-                </button>
-                <p id="brain-url" class="text-[7px] text-zinc-600 text-center mono truncate opacity-50">https://litellm-gateway-319843614554.us-central1.run.app</p>
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-[#f1f3f4]">
+        <div id="chat-messages" class="flex flex-col w-full">
+            <div class="message-bubble message-agent">
+                Welcome, George. <strong>Primary Control</strong> v11.3 is active.
             </div>
         </div>
-
-        <!-- INFRASTRUCTURE METRICS -->
-        <div class="grid grid-cols-2 gap-3">
-            <div class="bg-[#0f0f11] border border-zinc-900 p-4 rounded-2xl">
-                <i data-lucide="server" class="w-4 h-4 text-blue-500 mb-2"></i>
-                <p class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Gateway</p>
-                <p class="text-[10px] text-white mt-1">Cloud Run v1</p>
-            </div>
-            <div class="bg-[#0f0f11] border border-zinc-900 p-4 rounded-2xl">
-                <i data-lucide="database" class="w-4 h-4 text-emerald-500 mb-2"></i>
-                <p class="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Memory</p>
-                <p class="text-[10px] text-white mt-1">Baked Schema</p>
-            </div>
-        </div>
-
-        <!-- AUDIT LOGS -->
-        <div class="bg-[#0f0f11] border border-zinc-900 p-4 rounded-2xl space-y-3">
-            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Audit Ledger</p>
-            <div id="mandate-logs" class="space-y-2">
-                <div class="flex items-center gap-3 text-[9px] text-zinc-400 font-mono">
-                    <span class="text-emerald-500">●</span>
-                    <span>BRAIN_MIGRATION_SUCCESS</span>
-                </div>
-                <div class="flex items-center gap-3 text-[9px] text-zinc-600 font-mono">
-                    <span class="text-zinc-700">●</span>
-                    <span>M4_DECOUPLING_COMPLETE</span>
-                </div>
-            </div>
-        </div>
-
     </main>
 
-    <!-- MOBILE NAVIGATION -->
-    <nav class="fixed bottom-0 left-0 right-0 glass border-t border-white/5 p-4 pb-10 flex justify-around items-center z-50">
-        <button class="text-amber-500"><i data-lucide="zap" class="w-6 h-6"></i></button>
-        <button class="text-zinc-700"><i data-lucide="message-square" class="w-6 h-6"></i></button>
-        <button class="text-zinc-700"><i data-lucide="globe" class="w-6 h-6"></i></button>
-    </nav>
+    <div class="bg-white border-t border-gray-200 p-3 pb-8 shrink-0">
+        <form id="chat-form" class="flex gap-2 max-w-screen-md mx-auto">
+            <div class="relative flex-1">
+                <input type="text" id="user-input" placeholder="Message the Sentinel..." class="w-full bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 rounded-full px-5 py-3 text-sm outline-none transition-all">
+            </div>
+            <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md active:scale-90 transition-all">
+                <i data-lucide="send" class="w-5 h-5"></i>
+            </button>
+        </form>
+    </div>
 
     <script>
         const GATEWAY_URL = "https://litellm-gateway-319843614554.us-central1.run.app";
+        const messagesContainer = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
 
         function updateClock() {
             const now = new Date();
@@ -119,41 +135,44 @@
         updateClock();
         lucide.createIcons();
 
-        // Initial Health Check
         async function checkBrain() {
+            const dot = document.getElementById('status-dot');
+            const label = document.getElementById('status-label');
             try {
+                const start = Date.now();
                 const res = await fetch(`${GATEWAY_URL}/health`);
+                const latency = Date.now() - start;
                 if (res.ok) {
-                    document.getElementById('status-text').textContent = "Sovereign Online";
-                    document.getElementById('status-text').classList.replace('text-amber-500', 'text-emerald-500');
-                    document.getElementById('status-dot').classList.replace('bg-amber-500', 'bg-emerald-500');
+                    dot.classList.add('bg-emerald-600', 'pulse-emerald');
+                    label.textContent = `Online • ${latency}ms`;
                 }
-            } catch (e) {
-                document.getElementById('status-text').textContent = "Link Failed";
-            }
+            } catch (e) { label.textContent = "Offline"; }
         }
         checkBrain();
 
-        document.getElementById('brain-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('brain-btn');
-            btn.innerHTML = '<span class="animate-pulse italic">HANDSHAKING...</span>';
-            
+        function addMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = `message-bubble ${role === 'user' ? 'message-user' : 'message-agent'}`;
+            div.textContent = text;
+            messagesContainer.appendChild(div);
+            const container = document.getElementById('chat-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text) return;
+            addMessage(text, 'user');
+            userInput.value = '';
             try {
-                const start = Date.now();
-                const response = await fetch(`${GATEWAY_URL}/health`);
-                const latency = Date.now() - start;
-                
-                if (response.ok) {
-                    btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> HEARTBEAT: ${latency}ms`;
-                    btn.classList.replace('bg-blue-600', 'bg-emerald-600');
-                } else {
-                    throw new Error();
+                const res = await fetch(`${GATEWAY_URL}/health`);
+                if (res.ok) {
+                    setTimeout(() => {
+                        addMessage("Acknowledge. Mandate received. Processing through Cloud Gateway...", 'agent');
+                    }, 600);
                 }
-            } catch (e) {
-                btn.innerHTML = '<i data-lucide="alert-triangle" class="w-4 h-4"></i> TIMEOUT';
-                btn.classList.replace('bg-blue-600', 'bg-red-600');
-            }
-            lucide.createIcons();
+            } catch (err) { addMessage("Error: Gateway unreachable.", 'agent'); }
         });
     </script>
 </body>
