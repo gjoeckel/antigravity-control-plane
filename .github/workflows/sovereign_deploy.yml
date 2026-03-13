@@ -50,7 +50,7 @@ jobs:
           retention-days: 30
 
       - name: Publish to Open VSX
-        if: ${{ secrets.OVSX_PAT != '' }}
-        run: ovsx publish acp-ui-${{ github.ref_name }}.vsix --pat ${{ secrets.OVSX_PAT }}
+        if: ${{ env.OVSX_PAT != '' }}
+        run: ovsx publish acp-ui-${{ github.ref_name }}.vsix --pat ${{ env.OVSX_PAT }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
